@@ -45,20 +45,26 @@ namespace AutoVersioner.Providers
             if (cfg.IsVerbose) Console.WriteLine("Detecting the changeset in the output of hg.exe...");
             var lines = stdout.Split('\n').Select(ln => ln.Trim()).ToArray();
             var first = lines.FirstOrDefault();
-            if (first == null)
-            {
-                if (cfg.IsVerbose) Console.WriteLine("Detection failed: output is empty.");
-                return null;
-            }
-            var match = Regex.Match(first, @"^changeset:.*:(?<changeset>.*)$");
-            if (!match.Success)
-            {
-                if (cfg.IsVerbose) Console.WriteLine("Detection failed: first line of the output didn't match the \"^changeset:.*:(?<changeset>.*)$\" regex.");
-                return null;
-            }
 
-            var changeset = match.Result("${changeset}");
-            if (cfg.IsVerbose) Console.WriteLine("Changeset is successfully detected as: {0}", changeset.ToTrace());
+            String changeset;
+            if (String.IsNullOrEmpty(first))
+            {
+                if (cfg.IsVerbose) Console.WriteLine("[Warning] Output of \"hg.exe log\" is empty.");
+                changeset = "N/A";
+                if (cfg.IsVerbose) Console.WriteLine("Changeset is successfully detected as: {0}", changeset.ToTrace());
+            }
+            else
+            {
+                var match = Regex.Match(first, @"^changeset:.*:(?<changeset>.*)$");
+                if (!match.Success)
+                {
+                    if (cfg.IsVerbose) Console.WriteLine("Detection failed: first line of the output didn't match the \"^changeset:.*:(?<changeset>.*)$\" regex.");
+                    return null;
+                }
+
+                changeset = match.Result("${changeset}");
+                if (cfg.IsVerbose) Console.WriteLine("Changeset is successfully detected as: {0}", changeset.ToTrace());
+            }
 
             var tokens = new ResolvedTokens(cfg);
             tokens.Codebase = cfg.ProjectDir;
